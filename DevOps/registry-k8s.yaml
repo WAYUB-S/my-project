@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: demo-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      containers:
+      - name: registry
+        image: registry:2                 # 👈 official Docker registry
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: registry-storage
+          mountPath: /var/lib/registry
+      volumes:
+      - name: registry-storage
+        emptyDir: {}                      # ⚠️ demo only: pod ตายข้อมูลหาย
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: demo-k8s
+spec:
+  selector:
+    app: registry
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP

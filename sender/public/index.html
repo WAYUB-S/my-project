@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Internal API Sender</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5fb;
+    }
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #64748b;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1.3fr;
+      gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .field-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      background: #f8fafc;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+      background: #ffffff;
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .status-ok {
+      color: #16a34a;
+      font-size: 12px;
+    }
+    .status-error {
+      color: #dc2626;
+      font-size: 12px;
+    }
+    .mono {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      overflow-x: auto;
+      max-height: 220px;
+    }
+    .mono-line {
+      white-space: pre;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-weight: 600;
+      color: #64748b;
+      background: #f8fafc;
+    }
+    .tag-pill {
+      display: inline-flex;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">Internal API Sender</div>
+        <div class="subtitle">ส่งข้อมูลผ่าน IP ภายใน Kubernetes Cluster</div>
+      </div>
+      <div class="badge">
+        <span class="badge-dot" id="receiver-status-dot"></span>
+        <span id="receiver-status-text">Receiver: Checking...</span>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- ฟอร์มส่งข้อมูล -->
+      <div class="card">
+        <div class="card-title">ส่งข้อมูลไปยัง Receiver</div>
+        <div class="card-subtitle">ข้อมูลทั้งหมดจะถูกส่งผ่าน Service ภายใน cluster (ClusterIP)</div>
+
+        <form id="send-form">
+          <div class="field-row">
+            <div style="flex: 2 1 0;">
+              <label for="receiver-url">Receiver URL (ภายใน)</label>
+              <input
+                type="text"
+                id="receiver-url"
+                value="/api/send"
+                readonly
+              />
+            </div>
+            <div style="flex: 1 1 0;">
+              <label for="tag">Tag</label>
+              <select id="tag">
+                <option value="test">test</option>
+                <option value="order">order</option>
+                <option value="alert">alert</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div style="flex: 1 1 0;">
+              <label for="correlation-id">Correlation ID</label>
+              <input type="text" id="correlation-id" />
+            </div>
+            <div style="flex: 1 1 0;">
+              <label for="source">Source</label>
+              <input type="text" id="source" value="sender-web-1" />
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label for="message">Message</label>
+            <textarea id="message" placeholder="พิมพ์ข้อความที่ต้องการส่ง..."></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button type="button" class="btn-secondary" id="btn-clear">Clear</button>
+            <button type="submit" class="btn-primary" id="btn-send">
+              ส่งข้อมูล
+            </button>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <span id="send-status" class="status-ok"></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- แสดงผล + response -->
+      <div class="card">
+        <div class="card-title">ผลลัพธ์ล่าสุด</div>
+        <div class="card-subtitle">ดูสถานะการส่งล่าสุด และ Response จาก Receiver</div>
+
+        <div style="font-size: 12px; margin-bottom: 6px;">
+          <span id="last-send-summary">ยังไม่มีการส่งข้อมูล</span>
+        </div>
+
+        <pre class="mono" id="response-view"><span class="mono-line">รอการส่งข้อมูล...</span></pre>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div style="margin-top: 24px;" class="card">
+      <div class="card-title">ประวัติการส่ง (ล่าสุด 10 รายการ)</div>
+      <div class="card-subtitle">ช่วยให้ตรวจสอบย้อนหลังและ debug ได้ง่ายขึ้น</div>
+
+      <div style="overflow-x:auto; margin-top: 8px;">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>เวลา</th>
+              <th>Correlation ID</th>
+              <th>Tag</th>
+              <th>Message</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr>
+              <td colspan="5">ยังไม่มีข้อมูล</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function generateCorrelationId() {
+      const now = new Date();
+      const pad = (n) => n.toString().padStart(2, "0");
+      return (
+        "req-" +
+        now.getFullYear() +
+        pad(now.getMonth() + 1) +
+        pad(now.getDate()) +
+        "-" +
+        pad(now.getHours()) +
+        pad(now.getMinutes()) +
+        pad(now.getSeconds())
+      );
+    }
+
+    const corrInput = document.getElementById("correlation-id");
+    corrInput.value = generateCorrelationId();
+
+    const history = [];
+    const historyBody = document.getElementById("history-body");
+    const responseView = document.getElementById("response-view");
+    const lastSendSummary = document.getElementById("last-send-summary");
+    const sendStatus = document.getElementById("send-status");
+    const btnSend = document.getElementById("btn-send");
+
+    document.getElementById("btn-clear").addEventListener("click", () => {
+      document.getElementById("message").value = "";
+      corrInput.value = generateCorrelationId();
+      sendStatus.textContent = "";
+      responseView.textContent = "รอการส่งข้อมูล...";
+    });
+
+    document.getElementById("send-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = document.getElementById("message").value.trim();
+      const tag = document.getElementById("tag").value;
+      const correlationId = corrInput.value.trim() || generateCorrelationId();
+      const source = document.getElementById("source").value.trim() || "sender-web";
+
+      if (!message) {
+        sendStatus.textContent = "กรุณากรอก Message ก่อนส่ง";
+        sendStatus.className = "status-error";
+        return;
+      }
+
+      const payload = {
+        source,
+        message,
+        tag,
+        correlationId,
+        sentAt: new Date().toISOString(),
+      };
+
+      btnSend.disabled = true;
+      sendStatus.textContent = "กำลังส่งข้อมูล...";
+      sendStatus.className = "status-ok";
+
+      const start = performance.now();
+      try {
+        const res = await fetch("/api/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const ms = (performance.now() - start).toFixed(0);
+        const data = await res.json();
+
+        responseView.textContent = JSON.stringify(data, null, 2);
+        lastSendSummary.textContent = `ส่งสำเร็จ (HTTP ${res.status}) ใช้เวลา ${ms} ms`;
+        sendStatus.textContent = "ส่งข้อมูลสำเร็จ";
+        sendStatus.className = "status-ok";
+
+        history.unshift({
+          time: new Date().toLocaleTimeString(),
+          correlationId,
+          tag,
+          message: message.slice(0, 60),
+          status: res.status,
+        });
+        if (history.length > 10) history.pop();
+        renderHistory();
+      } catch (err) {
+        responseView.textContent = String(err);
+        lastSendSummary.textContent = "ส่งไม่สำเร็จ";
+        sendStatus.textContent = "ส่งข้อมูลไม่สำเร็จ";
+        sendStatus.className = "status-error";
+      } finally {
+        btnSend.disabled = false;
+      }
+    });
+
+    function renderHistory() {
+      historyBody.innerHTML = "";
+      if (history.length === 0) {
+        historyBody.innerHTML = "<tr><td colspan='5'>ยังไม่มีข้อมูล</td></tr>";
+        return;
+      }
+      for (const row of history) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.time}</td>
+          <td class="mono-line">${row.correlationId}</td>
+          <td><span class="tag-pill">${row.tag}</span></td>
+          <td>${row.message}</td>
+          <td>${row.status}</td>
+        `;
+        historyBody.appendChild(tr);
+      }
+    }
+
+    // health check ของ receiver (ผ่าน backend sender)
+    async function checkReceiverHealth() {
+      const dot = document.getElementById("receiver-status-dot");
+      const text = document.getElementById("receiver-status-text");
+      try {
+        const res = await fetch("/api/receiver-health");
+        if (res.ok) {
+          dot.style.background = "#22c55e";
+          text.textContent = "Receiver: Healthy";
+        } else {
+          dot.style.background = "#eab308";
+          text.textContent = "Receiver: Degraded";
+        }
+      } catch {
+        dot.style.background = "#dc2626";
+        text.textContent = "Receiver: Unreachable";
+      }
+    }
+
+    checkReceiverHealth();
+    setInterval(checkReceiverHealth, 15000);
+  </script>
+</body>
+</html>
