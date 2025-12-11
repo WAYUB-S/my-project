@@ -1,0 +1,21 @@
+# receiver-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: receiver-web
+  namespace: internal-api-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: receiver-web
+  template:
+    metadata:
+      labels:
+        app: receiver-web
+    spec:
+      containers:
+      - name: receiver-web
+        image: receiver-web:1.0   # 👈 เปลี่ยนเป็น image จริงของเรา
+        ports:
+        - containerPort: 8080                 # 👈 API port

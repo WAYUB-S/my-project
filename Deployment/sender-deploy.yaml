@@ -1,0 +1,24 @@
+# sender-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sender-web
+  namespace: internal-api-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sender-web
+  template:
+    metadata:
+      labels:
+        app: sender-web
+    spec:
+      containers:
+      - name: sender-web
+        image: sender-web:1.0    # 👈 เปลี่ยนเป็น image จริงของเรา
+        env:
+        - name: RECEIVER_BASE_URL
+          value: "http://receiver-svc.internal-api-demo.svc.cluster.local:8080"  # 👈 จุดสำคัญ: ใช้ Service Name ภายใน
+        ports:
+        - containerPort: 3000                # สมมติ sender เว็บรัน port 3000

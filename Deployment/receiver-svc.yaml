@@ -1,0 +1,13 @@
+# receiver-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: receiver-svc
+  namespace: internal-api-demo
+spec:
+  type: ClusterIP          # 👈 ค่า default, internal only
+  selector:
+    app: receiver-web
+  ports:
+  - port: 8080             # Service Port (ภายใน cluster)
+    targetPort: 8080       # containerPort ของ receiver-web
